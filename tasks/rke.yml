@@ -1,0 +1,50 @@
+---
+
+# Install, configure and run Rancher Kubernetes Engine (RKE) on the target hosts to configure a Kubernetes cluster
+
+
+
+
+
+- name: Download RKE binary
+  get_url:
+    url: "{{ rke_binary_url }}"
+    
+    dest: /usr/local/bin/rke
+    mode: "+rx"
+  register: rke_binary
+
+- name: Ensure config directory exists
+  file:
+    path: "{{ rke_config_dir }}"
+    state: directory
+
+- name: Create/update RKE config file
+  template:
+    src: rke_cluster.yml
+    dest: "{{ rke_config_dir }}/cluster.yml"
+    mode: 0664
+  register: rke_cluster_config
+ 
+
+- name: Install kubectl
+  get_url:
+    url: "https://storage.googleapis.com/kubernetes-release/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl"
+    dest: /usr/local/bin/kubectl
+    force: yes
+    mode: "+rx"
+
+- name: Ensure $HOME/.kube exists
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+
+- name: Copy kubeconfig to default location
+  copy:
+    remote_src: yes
+    src: "{{ rke_config_dir }}/cluster.yml"
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+
+
+
+
